@@ -1,0 +1,108 @@
+{
+  "project_name": "Vortex Cloud Gaming - Xbox Game Pass Style",
+  "language": "PT-BR",
+  "archetype": "THE PERFORMANCE PRO / XBOX GAME PASS AESTHETIC",
+  "design_philosophy": {
+    "core_identity": "High-density Xbox Game Pass visual interface for WebRTC PC Game Streaming with local Sunshine/Moonlight host integration.",
+    "anti_ai_rules": [
+      "NO generic light gray or basic indigo gradients; use Xbox Deep Charcoal (#0F171E, #121212) with Xbox Emerald Green (#107C41, #108040) highlights",
+      "NO center-everything disease: use asymmetrical hero banners with strong left-aligned typography and horizontal tile carousels",
+      "NO plain HTML controls for gamepad: render authentic Xbox controller layout with styled touch thumbsticks, ABXY signature color accents, and responsive touch feedback"
+    ]
+  },
+  "colors": {
+    "background_main": "#0D1117",
+    "background_card": "#161B22",
+    "background_card_hover": "#1F2937",
+    "background_nav": "rgba(15, 23, 30, 0.85)",
+    "xbox_green": "#107C41",
+    "xbox_green_bright": "#10B981",
+    "xbox_green_glow": "rgba(16, 124, 65, 0.4)",
+    "text_primary": "#F3F4F6",
+    "text_secondary": "#9CA3AF",
+    "text_muted": "#6B7280",
+    "border_subtle": "#21262D",
+    "border_active": "#107C41",
+    "gamepad_button_a": "#10B981",
+    "gamepad_button_b": "#EF4444",
+    "gamepad_button_x": "#3B82F6",
+    "gamepad_button_y": "#F59E0B",
+    "hud_bg": "rgba(15, 23, 30, 0.75)"
+  },
+  "typography": {
+    "font_family_heading": "'Barlow Condensed', 'Outfit', sans-serif",
+    "font_family_body": "'Inter', 'Segoe UI', sans-serif",
+    "hierarchy": {
+      "hero_title": "text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight uppercase",
+      "section_title": "text-2xl sm:text-3xl font-bold tracking-tight text-white",
+      "card_title": "text-lg font-semibold text-white truncate",
+      "body_text": "text-sm sm:text-base text-gray-300",
+      "badge_label": "text-xs font-bold uppercase tracking-wider"
+    }
+  },
+  "layout_and_navigation": {
+    "nav_bar": {
+      "style": "sticky top-0 z-50 backdrop-blur-xl bg-[#0F171E]/90 border-b border-[#21262D] px-6 py-3 flex items-center justify-between",
+      "logo": "VORTEX CLOUD - Xbox Game Pass visual badge in Green & Charcoal",
+      "items": [
+        {"label": "Início", "path": "/"},
+        {"label": "Meus Jogos", "path": "/library"},
+        {"label": "Catálogo", "path": "/catalog"},
+        {"label": "Histórico", "path": "/history"},
+        {"label": "Saves", "path": "/cloud-saves"},
+        {"label": "Host do PC", "path": "/server-status"},
+        {"label": "Perfil", "path": "/profile"}
+      ]
+    },
+    "hero_carousel": {
+      "container": "relative w-full h-[420px] rounded-2xl overflow-hidden border border-[#21262D] bg-[#161B22] shadow-2xl mb-10",
+      "overlay": "bg-gradient-to-r from-[#0D1117] via-[#0D1117]/70 to-transparent p-8 sm:p-12 flex flex-col justify-end"
+    },
+    "game_grid": {
+      "horizontal_scroll": "flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-emerald-700 scrollbar-track-transparent",
+      "portrait_card": "w-48 flex-shrink-0 group relative rounded-xl overflow-hidden bg-[#161B22] border border-[#21262D] transition-all duration-300 hover:scale-105 hover:border-[#107C41] hover:shadow-[0_0_20px_rgba(16,124,65,0.4)] cursor-pointer"
+    }
+  },
+  "virtual_gamepad_spec": {
+    "layout": "Landscape overlay for mobile touch or screen streaming",
+    "components": {
+      "left_stick": "Virtual touch joystick for movement (L3 click)",
+      "right_stick": "Virtual touch joystick for camera look (R3 click)",
+      "dpad": "Cross directional pad with green active highlights",
+      "abxy_cluster": "Signature Xbox ABXY layout (A: Green, B: Red, X: Blue, Y: Yellow)",
+      "bumpers_triggers": "LB / LT top left buttons, RB / RT top right triggers",
+      "center_buttons": "View, Menu (Start/Select) and Xbox Guide logo button in center"
+    },
+    "bluetooth_support": "HTML5 Gamepad API listener with automatic auto-hide on physical controller detection"
+  },
+  "streaming_player": {
+    "container": "relative w-full h-screen bg-black overflow-hidden flex items-center justify-center",
+    "video": "w-full h-full object-contain",
+    "hud_overlay": "absolute top-4 left-4 right-4 flex items-center justify-between bg-[#0F171E]/80 backdrop-blur-md p-3 rounded-xl border border-[#21262D] z-40 text-xs text-white",
+    "launch_modal": "Game Launch sheet providing dual actions: 'Jogar no Navegador (WebRTC/Sunshine)' and 'Abrir no Moonlight App (moonlight://launch)'"
+  },
+  "pc_host_page": {
+    "sections": [
+      "Status da Captura de Tela & Agent Local",
+      "Configuração de TURN / STUN Server",
+      "Pastas de Jogos no PC (C:\\Jogos, D:\\SteamLibrary)",
+      "Pareamento Sunshine & Chave PIN de Conexão",
+      "Clientes Conectados & Métricas de Latência em Tempo Real"
+    ]
+  },
+  "image_urls": {
+    "hero_banner": "https://images.unsplash.com/photo-1672872476232-da16b45c9001?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzF8MHwxfHNlYXJjaHwxfHxjeWJlcnB1bmslMjBnYW1pbmclMjBuZW9uJTIwY2l0eSUyMHdhbGxwYXBlcnxlbnwwfHx8fDE3OTIyMDEzNjV8MA&ixlib=rb-4.1.0&q=85",
+    "game_covers": [
+      "https://images.unsplash.com/photo-1672872476232-da16b45c9001?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzF8MHwxfHNlYXJjaHwxfHxjeWJlcnB1bmslMjBnYW1pbmclMjBuZW9uJTIwY2l0eSUyMHdhbGxwYXBlcnxlbnwwfHx8fDE3OTIyMDEzNjV8MA&ixlib=rb-4.1.0&q=85",
+      "https://images.pexels.com/photos/8108089/pexels-photo-8108089.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "https://images.unsplash.com/photo-1600998837340-4887228e311f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzF8MHwxfHNlYXJjaHwzfHxjeWJlcnB1bmslMjBnYW1pbmclMjBuZW9uJTIwY2l0eSUyMHdhbGxwYXBlcnxlbnwwfHx8fDE3OTIyMDEzNjV8MA&ixlib=rb-4.1.0&q=85",
+      "https://images.pexels.com/photos/17195067/pexels-photo-17195067.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"
+    ]
+  },
+  "UNIVERSAL GUIDELINES FOR MAIN AGENT": [
+    "Ensure all interactive buttons, inputs, game cards, and HUD controls have unique data-testid attributes (e.g. data-testid='game-card-launch-btn')",
+    "Maintain high APCA contrast with light text on deep charcoal backgrounds (#0D1117 / #161B22)",
+    "Use smooth micro-interactions (hover scale-105, green neon glow shadow, active tap states)",
+    "Always provide PT-BR localization across all tabs, modals, game settings, and controller mappings"
+  ]
+}

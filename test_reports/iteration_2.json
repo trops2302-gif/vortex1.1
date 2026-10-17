@@ -1,0 +1,24 @@
+{
+  "summary": "Tested two NEW features (Sessions History + WebRTC Signaling demo). Backend pytest: 5/5 new tests pass — GET /api/sessions/history returns timeline with game{title,cover}, node{name,flag,gpu}, duration_seconds, started_at, and linked saves array; POST /api/saves with session_id correctly links the save and it appears in that session's saves array; WebSocket /api/ws/signal/{room} returns joined {peers:N}, broadcasts peer-joined / peer-left, and relays messages between two peers in the same room. Frontend Playwright: login (teste@vortex.gg/test123) works, sidebar shows new 'Histórico' (nav-history-link) and 'Stream Real · Demo' (nav-webrtc-link) and both navigate correctly, /app/history renders timeline (data-testid history-item-*) and a newly started session appears after launching Elden Ring from catalog, /app/webrtc renders room input (webrtc-room-input generates 6-char code), copy-link button (webrtc-copy-link), status badge (webrtc-status; starts as 'Pronto'), and both action buttons (webrtc-start-host, webrtc-start-viewer). Clicking 'Assistir (celular)' connected to signaling WS and status badge changed to 'Conectando...' with no JS errors. No regressions in existing nav/auth.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_new_features.py",
+    "/app/test_reports/pytest/new_features.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "WebrtcDemo.jsx: BACKEND_URL replace(/^http/, 'ws') correctly converts both http->ws and https->wss. Good.",
+    "server.py SignalRooms uses in-memory dict — not scalable across workers, acceptable for demo. Document this.",
+    "sessions/history has no pagination/limit beyond 500; fine for MVP, consider adding limit/offset later.",
+    "WebRTC demo lacks a TURN server — stated explicitly in UI (honesty box). Many real-world NAT scenarios will fail without TURN."
+  ],
+  "updated_files": ["/app/backend/tests/test_new_features.py"],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "teste@vortex.gg / test123 (user); admin@vortex.gg / vortex123 (admin).",
+  "seed_data_creation": "Test created a TEST_ user, started/ended one session on elden-ring + sao-paulo, created a save linked to that session. Also started a UI session via launch flow during Playwright.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Both new features (History timeline + WebRTC signaling demo) are working end-to-end. New backend test file at /app/backend/tests/test_new_features.py (uses websockets lib and pytest-asyncio — already installed). WS URL is wss://<REACT_APP_BACKEND_URL host>/api/ws/signal/{room}. Playwright cannot test the host-side (getDisplayMedia requires user screen picker); only viewer-connect path was validated. The viewer path connects to WS and badge changes to 'Conectando...' (then would go to 'live' if a host joined).",
+  "rca of the issue": "N/A — no bugs found."
+}
