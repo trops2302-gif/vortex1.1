@@ -562,6 +562,19 @@ from fastapi.responses import FileResponse
 AGENT_DIR = ROOT_DIR.parent / "host-agent"
 
 
+async def require_admin(user: dict = Depends(get_current_user)) -> dict:
+    if user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Apenas o administrador pode fazer isso")
+    return user
+
+
+class KeyMap(BaseModel):
+    enabled: bool = False
+    buttons: dict = {}
+    lstick: str = "none"
+    rstick: str = "none"
+
+
 class MyGameInput(BaseModel):
     title: str
     folder_index: int = 0
@@ -570,6 +583,7 @@ class MyGameInput(BaseModel):
     cover: str = ""
     hero: str = ""
     genre: str = ""
+    key_map: Optional[KeyMap] = None
 
 
 class SettingsInput(BaseModel):
@@ -578,8 +592,8 @@ class SettingsInput(BaseModel):
     pc_name: str = "Meu PC"
 
 
-def _settings_of(user: dict) -> dict:
-    s = user.get("settings") or {}
+async def _settings_doc() -> dict:
+    s = await db.config.find_one({"id": "host"}, {"_id": 0}) or {}
     folders = (s.get("game_folders") or ["", ""]) + ["", ""]
     return {"game_folders": folders[:2], "moonlight_host": s.get("moonlight_host", ""),
             "pc_name": s.get("pc_name", "Meu PC")}
@@ -587,24 +601,48 @@ def _settings_of(user: dict) -> dict:
 
 @api_router.get("/settings")
 async def get_settings(user: dict = Depends(get_current_user)):
-    return _settings_of(user)
+    s = await _settings_doc()
+    if user.get("role") != "admin":
+        s["game_folders"] = ["", ""]
+    return s
 
 
 @api_router.put("/settings")
-async def put_settings(payload: SettingsInput, user: dict = Depends(get_current_user)):
+async def put_settings(payload: SettingsInput, user: dict = Depends(require_admin)):
     data = payload.model_dump()
     data["game_folders"] = (data["game_folders"] + ["", ""])[:2]
-    await db.users.update_one({"_id": ObjectId(user["_id"])}, {"$set": {"settings": data}})
+    await db.config.update_one({"id": "host"}, {"$set": {**data, "id": "host"}}, upsert=True)
     return data
 
 
 @api_router.get("/mygames")
 async def list_mygames(user: dict = Depends(get_current_user)):
-    return await db.mygames.find({"user_id": user["_id"]}, {"_id": 0, "user_id": 0}).sort("created_at", -1).to_list(1000)
+    proj = {"_id": 0, "user_id": 0}
+    if user.get("role") != "admin":
+        proj.update({"exe": 0, "args": 0, "folder_index": 0})
+    return await db.mygames.find({}, proj).sort("created_at", -1).to_list(1000)
+
+
+@api_router.get("/covers/search")
+async def covers_search(q: str, user: dict = Depends(require_admin)):
+    base = "https://cdn.cloudflare.steamstatic.com/steam/apps"
+    async with httpx.AsyncClient(timeout=8) as c:
+        r = await c.get("https://store.steampowered.com/api/storesearch/",
+                        params={"term": q, "l": "portuguese", "cc": "BR"})
+        out = []
+        for it in r.json().get("items", [])[:6]:
+            cover = f"{base}/{it['id']}/library_600x900.jpg"
+            if (await c.head(cover)).status_code != 200:
+                continue
+            hero = f"{base}/{it['id']}/library_hero.jpg"
+            if (await c.head(hero)).status_code != 200:
+                hero = f"{base}/{it['id']}/header.jpg"
+            out.append({"appid": it["id"], "name": it["name"], "cover": cover, "hero": hero})
+    return out
 
 
 @api_router.post("/mygames")
-async def create_mygame(payload: MyGameInput, user: dict = Depends(get_current_user)):
+async def create_mygame(payload: MyGameInput, user: dict = Depends(require_admin)):
     if not payload.title.strip() or not payload.exe.strip():
         raise HTTPException(status_code=400, detail="Nome e executável são obrigatórios")
     doc = {**payload.model_dump(), "id": secrets.token_hex(6), "user_id": user["_id"],
@@ -614,16 +652,16 @@ async def create_mygame(payload: MyGameInput, user: dict = Depends(get_current_u
 
 
 @api_router.put("/mygames/{game_id}")
-async def update_mygame(game_id: str, payload: MyGameInput, user: dict = Depends(get_current_user)):
-    res = await db.mygames.update_one({"id": game_id, "user_id": user["_id"]}, {"$set": payload.model_dump()})
+async def update_mygame(game_id: str, payload: MyGameInput, user: dict = Depends(require_admin)):
+    res = await db.mygames.update_one({"id": game_id}, {"$set": payload.model_dump()})
     if not res.matched_count:
         raise HTTPException(status_code=404, detail="Jogo não encontrado")
     return await db.mygames.find_one({"id": game_id}, {"_id": 0, "user_id": 0})
 
 
 @api_router.delete("/mygames/{game_id}")
-async def delete_mygame(game_id: str, user: dict = Depends(get_current_user)):
-    await db.mygames.delete_one({"id": game_id, "user_id": user["_id"]})
+async def delete_mygame(game_id: str, user: dict = Depends(require_admin)):
+    await db.mygames.delete_one({"id": game_id})
     return {"ok": True}
 
 
@@ -635,15 +673,16 @@ def _join_path(folder: str, exe: str) -> str:
 
 
 @api_router.get("/mygames/sunshine/export")
-async def sunshine_export(user: dict = Depends(get_current_user)):
-    folders = _settings_of(user)["game_folders"]
-    games = await db.mygames.find({"user_id": user["_id"]}, {"_id": 0}).to_list(1000)
+async def sunshine_export(user: dict = Depends(require_admin)):
+    folders = (await _settings_doc())["game_folders"]
+    games = await db.mygames.find({}, {"_id": 0}).to_list(1000)
     apps = []
     for g in games:
         full = _join_path(folders[g.get("folder_index", 0)] if g.get("folder_index", 0) < 2 else "", g["exe"])
         wd = full.rsplit("\\", 1)[0] if "\\" in full else full.rsplit("/", 1)[0]
         cmd = f'"{full}" {g.get("args", "")}'.strip()
-        apps.append({"name": g["title"], "cmd": cmd, "working-dir": wd, "auto-detach": "true"})
+        apps.append({"name": g["title"], "cmd": cmd, "working-dir": wd, "auto-detach": "true",
+                     "cover": g.get("cover", "")})
     return {"apps": apps}
 
 
@@ -675,6 +714,62 @@ async def download_agent(name: str):
     return FileResponse(AGENT_DIR / name, filename=name)
 
 
+class StreamStats(BaseModel):
+    fps: float = 0
+    rtt: float = 0
+    mbps: float = 0
+    res: str = ""
+
+
+class StreamStart(BaseModel):
+    game_id: Optional[str] = None
+
+
+@api_router.post("/streams/start")
+async def stream_start(payload: StreamStart, user: dict = Depends(get_current_user)):
+    game = await db.mygames.find_one({"id": payload.game_id}, {"_id": 0}) if payload.game_id else None
+    now = datetime.now(timezone.utc).isoformat()
+    doc = {"id": secrets.token_hex(8), "user_id": user["_id"], "user_name": user.get("name"),
+           "game_id": payload.game_id, "game_title": game["title"] if game else "Área de trabalho",
+           "game_cover": game.get("cover", "") if game else "", "started_at": now, "last_seen": now,
+           "samples": 0, "fps_sum": 0, "rtt_sum": 0, "mbps_sum": 0, "res": "", "active": True}
+    await db.streams.insert_one(doc)
+    return {"id": doc["id"]}
+
+
+@api_router.post("/streams/{sid}/stats")
+async def stream_stats(sid: str, payload: StreamStats, user: dict = Depends(get_current_user)):
+    await db.streams.update_one({"id": sid, "user_id": user["_id"]}, {
+        "$inc": {"samples": 1, "fps_sum": payload.fps, "rtt_sum": payload.rtt, "mbps_sum": payload.mbps},
+        "$set": {"last_seen": datetime.now(timezone.utc).isoformat(), "res": payload.res}})
+    return {"ok": True}
+
+
+@api_router.post("/streams/{sid}/end")
+async def stream_end(sid: str, user: dict = Depends(get_current_user)):
+    await db.streams.update_one({"id": sid, "user_id": user["_id"]},
+                                {"$set": {"active": False, "last_seen": datetime.now(timezone.utc).isoformat()}})
+    return {"ok": True}
+
+
+@api_router.get("/streams/history")
+async def stream_history(user: dict = Depends(get_current_user)):
+    q = {} if user.get("role") == "admin" else {"user_id": user["_id"]}
+    docs = await db.streams.find(q, {"_id": 0}).sort("started_at", -1).to_list(300)
+    stale = datetime.now(timezone.utc) - timedelta(seconds=60)
+    out = []
+    for d in docs:
+        n = d.get("samples") or 0
+        last = datetime.fromisoformat(d["last_seen"])
+        out.append({"id": d["id"], "user_name": d.get("user_name"), "game_title": d["game_title"],
+                    "game_cover": d.get("game_cover"), "started_at": d["started_at"],
+                    "duration_seconds": int((last - datetime.fromisoformat(d["started_at"])).total_seconds()),
+                    "active": bool(d.get("active")) and last > stale, "res": d.get("res"),
+                    "avg_fps": round(d["fps_sum"] / n) if n else 0, "avg_rtt": round(d["rtt_sum"] / n) if n else 0,
+                    "avg_mbps": round(d["mbps_sum"] / n, 1) if n else 0})
+    return out
+
+
 class StreamRooms:
     def __init__(self):
         self.rooms: dict = {}
@@ -686,11 +781,13 @@ class StreamRooms:
 stream_rooms = StreamRooms()
 
 
-async def _ws_user(token: str) -> Optional[str]:
+HOST_ROOM = "main"
+
+
+async def _ws_user(token: str) -> Optional[dict]:
     try:
         payload = jwt.decode(token, get_jwt_secret(), algorithms=[JWT_ALGORITHM])
-        user = await db.users.find_one({"_id": ObjectId(payload["sub"])})
-        return str(user["_id"]) if user else None
+        return await db.users.find_one({"_id": ObjectId(payload["sub"])})
     except Exception:
         return None
 
@@ -705,18 +802,18 @@ async def _send(ws: Optional[WebSocket], obj: dict):
 
 @api_router.get("/host/status")
 async def host_status(user: dict = Depends(get_current_user)):
-    r = stream_rooms.rooms.get(user["_id"]) or {"host": None, "viewers": {}}
+    r = stream_rooms.rooms.get(HOST_ROOM) or {"host": None, "viewers": {}}
     return {"online": r["host"] is not None, "viewers": len(r["viewers"])}
 
 
 @api_router.websocket("/ws/stream")
 async def stream_ws(websocket: WebSocket, token: str = "", role: str = "viewer"):
-    uid = await _ws_user(token)
+    user = await _ws_user(token)
     await websocket.accept()
-    if not uid or role not in ("host", "viewer"):
+    if not user or role not in ("host", "viewer") or (role == "host" and user.get("role") != "admin"):
         await websocket.close(code=4401)
         return
-    room = stream_rooms.room(uid)
+    room = stream_rooms.room(HOST_ROOM)
     peer_id = secrets.token_hex(4)
     if role == "host":
         if room["host"]:

@@ -3,8 +3,10 @@ import { X, Save } from "lucide-react";
 import { toast } from "sonner";
 import api, { formatApiError } from "@/lib/api";
 import { gamePath } from "@/lib/stream";
+import CoverSearch from "@/components/CoverSearch";
+import KeyMapEditor from "@/components/KeyMapEditor";
 
-const EMPTY = { title: "", folder_index: 0, exe: "", args: "", cover: "", hero: "", genre: "" };
+const EMPTY = { title: "", folder_index: 0, exe: "", args: "", cover: "", hero: "", genre: "", key_map: null };
 
 function Field({ label, hint, children }) {
   return (
@@ -61,8 +63,10 @@ export default function MyGameForm({ initial, settings, onClose, onSaved }) {
           <p className="rounded bg-black/30 px-3 py-2 font-mono-vx text-[11px] text-slate-400" data-testid="mygame-path-preview">Caminho no PC: {gamePath(f, settings) || "—"}</p>
           <Field label="Argumentos (opcional)"><input data-testid="mygame-args-input" value={f.args} onChange={set("args")} className={inputCls} placeholder="-fullscreen" /></Field>
           <Field label="Gênero (opcional)"><input data-testid="mygame-genre-input" value={f.genre} onChange={set("genre")} className={inputCls} placeholder="Metroidvania" /></Field>
+          <CoverSearch title={f.title} current={f.cover} onPick={(r) => setF({ ...f, cover: r.cover, hero: r.hero })} />
           <Field label="Capa vertical (URL da imagem)" hint="Dica: capas em steamgriddb.com · formato retrato 600×900"><input data-testid="mygame-cover-input" value={f.cover} onChange={set("cover")} className={inputCls} placeholder="https://…" /></Field>
           <Field label="Banner horizontal (URL, opcional)"><input data-testid="mygame-hero-input" value={f.hero} onChange={set("hero")} className={inputCls} placeholder="https://…" /></Field>
+          <KeyMapEditor value={f.key_map} onChange={(km) => setF({ ...f, key_map: km })} />
         </div>
         <button disabled={saving} data-testid="mygame-save-button" className="vx-btn vx-btn-primary mt-6 w-full py-3"><Save className="h-4 w-4" /> {saving ? "Salvando…" : "Salvar"}</button>
       </form>

@@ -88,9 +88,9 @@ export default function Dashboard() {
       <div className="flex flex-col justify-between gap-3 rounded-md bg-[#1C1F23] p-4 sm:flex-row sm:items-center" data-testid="home-host-banner">
         <div className="flex items-center gap-3">
           <span className={`h-2.5 w-2.5 rounded-full ${host.online ? "bg-cyan-400" : "bg-slate-600"}`} />
-          <p className="text-sm"><b>{user?.name?.split(" ")[0]}</b>, seu PC está <b className={host.online ? "text-cyan-400" : "text-slate-400"}>{host.online ? "online e pronto" : "offline"}</b>{host.viewers ? ` · ${host.viewers} dispositivo(s)` : ""}</p>
+          <p className="text-sm"><b>{user?.name?.split(" ")[0]}</b>, o PC servidor está <b className={host.online ? "text-cyan-400" : "text-slate-400"}>{host.online ? "online e pronto" : "offline"}</b>{host.viewers ? ` · ${host.viewers} dispositivo(s)` : ""}</p>
         </div>
-        <button data-testid="home-host-button" onClick={() => navigate("/app/host")} className="vx-btn vx-btn-ghost px-4 py-2 text-sm"><MonitorUp className="h-4 w-4" /> Host do PC</button>
+        {user?.role === "admin" && <button data-testid="home-host-button" onClick={() => navigate("/app/host")} className="vx-btn vx-btn-ghost px-4 py-2 text-sm"><MonitorUp className="h-4 w-4" /> Host do PC</button>}
       </div>
 
       <Row title="Seus jogos do PC" action="Ver todos" onAction={() => navigate("/app/mygames")} testid="row-mygames">
@@ -100,9 +100,9 @@ export default function Dashboard() {
             <p className="mt-2 truncate text-sm text-slate-300">{g.title}</p>
           </div>
         ))}
-        <button data-testid="home-add-mygame" onClick={() => navigate("/app/mygames")} className={`${tileW} vx-tile flex aspect-[2/3] flex-col items-center justify-center gap-2 border border-dashed border-white/15 bg-transparent text-sm text-slate-400`}>
+        {user?.role === "admin" && <button data-testid="home-add-mygame" onClick={() => navigate("/app/mygames")} className={`${tileW} vx-tile flex aspect-[2/3] flex-col items-center justify-center gap-2 border border-dashed border-white/15 bg-transparent text-sm text-slate-400`}>
           <Plus className="h-6 w-6" /> Adicionar jogo
-        </button>
+        </button>}
       </Row>
 
       {recent.length > 0 && (

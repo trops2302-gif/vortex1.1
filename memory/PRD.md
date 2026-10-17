@@ -47,3 +47,10 @@ Usuário (PT-BR) quer um "cloud gaming" com servidor próprio para jogar jogos d
 - Usuário pediu: NÃO chamar testing agent nem outros agentes; ele testa.
 ## Backlog
 - Sync automático com API do Sunshine; capas automáticas; histórico das sessões reais; mapeamento de teclas → controle.
+
+## Sessão 2026-06 (parte 3)
+- Papéis: só admin cria/edita/remove jogos, altera pastas, exporta/sincroniza Sunshine e abre Host do PC (ws role=host exige admin). Biblioteca de jogos do PC é global (config em db.config id=host); usuários não veem caminhos/exe.
+- Sunshine sync: agente (--sunshine-user/--sunshine-pass ou SUNSHINE_USER/PASS no .bat) cadastra/atualiza apps via POST /api/apps, capas convertidas em PNG (pillow).
+- Capas automáticas: GET /api/covers/search?q= (Steam storesearch, sem chave) → capa 600x900 + hero.
+- Controle → teclado: key_map por jogo (KeyMapEditor), toggle no player; lib/keymap.js converte gamepad virtual/Bluetooth em teclas/mouse.
+- Sessões reais: /api/streams/start|stats|end|history; Histórico mostra duração, FPS/ping/Mbps médios, resolução (admin vê todos).

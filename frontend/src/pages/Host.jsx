@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Cpu, MonitorUp, Radio, Download, Square, Smartphone, ShieldCheck, Gamepad2, Wifi, Loader2 } from "lucide-react";
+import { Cpu, MonitorUp, Radio, Download, Square, Smartphone, ShieldCheck, Gamepad2, Wifi, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import useHostEngine from "@/hooks/useHostEngine";
 import { AGENT_FILES } from "@/lib/stream";
@@ -14,7 +14,7 @@ function StatusRow({ icon: Icon, label, value, tone, testid }) {
   );
 }
 
-function AgentCard({ agent, connectAgent }) {
+function AgentCard({ agent, connectAgent, syncSunshine }) {
   const [pin, setPin] = useState(localStorage.getItem("vx_agent_pin") || "");
   return (
     <div className="rounded-md bg-[#1C1F23] p-5">
@@ -39,14 +39,21 @@ function AgentCard({ agent, connectAgent }) {
           {agent.state === "connecting" ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />} Parear
         </button>
       </div>
-      {agent.state === "badpin" && <p className="mt-2 text-xs text-red-400" data-testid="agent-badpin">PIN incorreto.</p>}
+      {agent.state === "badpin" && <p className="mt-2 text-xs text-red-400" data-testid="agent-badpin">PIN incorreto (após 5 erros o agente bloqueia por 60 s).</p>}
+      <div className="mt-5 border-t border-white/5 pt-4">
+        <p className="text-sm font-semibold">Sunshine / Moonlight</p>
+        <p className="mt-1 text-xs text-slate-400">Cadastra (ou atualiza) todos os jogos de Meus Jogos no Sunshine, com capa. Preencha SUNSHINE_USER e SUNSHINE_PASS no iniciar_agente.bat.</p>
+        <button data-testid="sunshine-sync-button" onClick={syncSunshine} disabled={agent.state !== "ok"} className="vx-btn vx-btn-ghost mt-3 px-4 py-2.5 text-sm disabled:opacity-40">
+          <RefreshCw className="h-4 w-4" /> Sincronizar com Sunshine {agent.state === "ok" && !agent.sunshine ? "(credenciais ausentes)" : ""}
+        </button>
+      </div>
     </div>
   );
 }
 
 const STEPS = [
   "Instale o Python 3 no PC (marque “Add to PATH”).",
-  "Baixe os 3 arquivos do agente numa pasta. Edite o iniciar_agente.bat com suas duas pastas de jogos e dê dois cliques nele.",
+  "Baixe os 3 arquivos do agente numa pasta. Edite o iniciar_agente.bat com suas duas pastas de jogos (e usuário/senha do Sunshine) e dê dois cliques nele.",
   "Copie o PIN que aparece na janela preta e clique em Parear aqui.",
   "Clique em Iniciar transmissão → escolha “Tela inteira” e marque “Compartilhar áudio do sistema”.",
   "No celular, entre com a mesma conta → Meus Jogos → escolha o jogo → Jogar no navegador.",
@@ -104,7 +111,7 @@ export default function Host() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <AgentCard agent={h.agent} connectAgent={h.connectAgent} />
+        <AgentCard agent={h.agent} connectAgent={h.connectAgent} syncSunshine={h.syncSunshine} />
         <div className="rounded-md bg-[#1C1F23] p-5">
           <h3 className="font-display text-lg font-bold">Como configurar (uma vez)</h3>
           <ol className="mt-3 space-y-2.5">

@@ -36,6 +36,12 @@ function Protected({ children }) {
   return children;
 }
 
+function AdminOnly({ children }) {
+  const { user } = useAuth();
+  if (user?.role !== "admin") return <Navigate to="/app/mygames" replace />;
+  return children;
+}
+
 function PublicOnly({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <FullLoader />;
@@ -71,7 +77,7 @@ function App() {
             <Route path="/app/servers" element={<AppShell><ServerStatus /></AppShell>} />
             <Route path="/app/saves" element={<AppShell><CloudSaves /></AppShell>} />
             <Route path="/app/webrtc" element={<Navigate to="/app/host" replace />} />
-            <Route path="/app/host" element={<AppShell><Host /></AppShell>} />
+            <Route path="/app/host" element={<AppShell><AdminOnly><Host /></AdminOnly></AppShell>} />
             <Route path="/app/mygames" element={<AppShell><MyGames /></AppShell>} />
             <Route path="/stream" element={<Protected><Player /></Protected>} />
             <Route path="/app/profile" element={<AppShell><Profile /></AppShell>} />

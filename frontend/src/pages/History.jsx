@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Clock, Server, Save, Radio, History as HistoryIcon } from "lucide-react";
 import api from "@/lib/api";
+import RealSessions from "@/components/RealSessions";
 
 export default function History() {
   const [items, setItems] = useState([]);
@@ -27,8 +28,9 @@ export default function History() {
 
   return (
     <div className="space-y-6">
+      <RealSessions />
       <div>
-        <h1 className="font-display text-3xl font-black tracking-tight sm:text-4xl">Histórico de Sessões</h1>
+        <h1 className="font-display text-xl font-bold">Sessões do catálogo de demonstração</h1>
         <p className="text-sm text-slate-400">
           {items.length} partidas · {fmtDuration(totalSeconds)} de tempo total em streaming
         </p>

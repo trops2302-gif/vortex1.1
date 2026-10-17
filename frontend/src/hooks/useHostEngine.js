@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import api from "@/lib/api";
 import { AGENT_URL, applyQuality, gamePath, getIce, preferCodecs, signalUrl } from "@/lib/stream";
 
@@ -38,10 +39,13 @@ export default function useHostEngine() {
       if (m.t === "auth") {
         if (m.ok) {
           localStorage.setItem("vx_agent_pin", pin);
-          setAgent({ state: "ok", gamepad: m.gamepad, folders: m.folders, platform: m.platform });
+          setAgent({ state: "ok", gamepad: m.gamepad, folders: m.folders, platform: m.platform, sunshine: m.sunshine });
           note("Agente local conectado");
           toViewers({ t: "agent", ok: true });
         } else setAgent({ state: "badpin" });
+      } else if (m.t === "sunshine-result") {
+        if (m.ok) { toast.success(`Sunshine sincronizado: ${m.added} novo(s), ${m.updated} atualizado(s)`); note("Sunshine sincronizado"); }
+        else toast.error(m.error);
       } else if (m.t === "launch-result") {
         note(m.ok ? "Jogo iniciado no PC" : `Falha ao iniciar: ${m.error}`);
         toViewers(m);
@@ -49,6 +53,13 @@ export default function useHostEngine() {
     };
     ws.onclose = () => setAgent((a) => (a.state === "badpin" ? a : { state: "off" }));
   }, [note]);
+
+  const syncSunshine = useCallback(async () => {
+    if (agentWs.current?.readyState !== 1) return toast.error("Pareie o agente do PC primeiro");
+    const { data } = await api.get("/mygames/sunshine/export");
+    toAgent({ t: "sunshine-sync", apps: data.apps });
+    toast.info(`Enviando ${data.apps.length} jogo(s) para o Sunshine…`);
+  }, []);
 
   const handleViewerMsg = useCallback((id, m) => {
     const p = peers.current.get(id);
@@ -191,5 +202,5 @@ export default function useHostEngine() {
     if (capturing && previewRef.current && stream.current) previewRef.current.srcObject = stream.current;
   }, [capturing]);
 
-  return { agent, capturing, signal, viewers, turn, log, previewRef, connectAgent, startCapture, stopCapture };
+  return { agent, capturing, signal, viewers, turn, log, previewRef, connectAgent, startCapture, stopCapture, syncSunshine };
 }

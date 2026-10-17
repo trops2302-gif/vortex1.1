@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Plus, FolderOpen, Upload, Circle } from "lucide-react";
 import { toast } from "sonner";
 import api from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 import MyGameForm from "@/components/MyGameForm";
 import MyGameSheet, { GameArt } from "@/components/MyGameSheet";
 
@@ -35,6 +36,8 @@ function FolderSettings({ settings, onSaved }) {
 }
 
 export default function MyGames() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const [games, setGames] = useState(null);
   const [settings, setSettings] = useState(null);
   const [host, setHost] = useState({ online: false });
@@ -74,21 +77,21 @@ export default function MyGames() {
         <div>
           <p className="flex items-center gap-2 text-sm font-semibold" data-testid="host-online-indicator">
             <Circle className={`h-2.5 w-2.5 ${host.online ? "fill-cyan-400 text-cyan-400" : "fill-slate-600 text-slate-600"}`} />
-            <span className={host.online ? "text-cyan-400" : "text-slate-500"}>{host.online ? "Seu PC está online" : "Seu PC está offline"}</span>
+            <span className={host.online ? "text-cyan-400" : "text-slate-500"}>{host.online ? "PC servidor online" : "PC servidor offline"}</span>
           </p>
           <h1 className="font-display text-3xl font-extrabold sm:text-4xl">Meus Jogos</h1>
-          <p className="text-sm text-slate-400">Jogos instalados no seu PC, prontos para jogar pelo navegador ou Moonlight.</p>
+          <p className="text-sm text-slate-400">{isAdmin ? "Jogos instalados no seu PC, prontos para jogar pelo navegador ou Moonlight." : "Jogos disponíveis no PC servidor. Toque para jogar."}</p>
         </div>
-        <div className="flex gap-2">
+        {isAdmin && <div className="flex gap-2">
           <button data-testid="sunshine-export-button" onClick={exportSunshine} className="vx-btn vx-btn-ghost px-4 py-2.5 text-sm"><Upload className="h-4 w-4" /> Exportar para Sunshine</button>
           <button data-testid="mygame-add-button" onClick={() => setEditing({})} className="vx-btn vx-btn-primary px-5 py-2.5 text-sm"><Plus className="h-4 w-4" /> Adicionar jogo</button>
-        </div>
+        </div>}
       </header>
 
       {games && games.length === 0 && (
         <div className="rounded-md border border-dashed border-white/10 p-10 text-center" data-testid="mygames-empty">
           <p className="font-display text-xl font-bold">Sua biblioteca do PC está vazia</p>
-          <p className="mt-1 text-sm text-slate-400">Configure as pastas abaixo e adicione o primeiro jogo informando o executável (.exe).</p>
+          <p className="mt-1 text-sm text-slate-400">{isAdmin ? "Configure as pastas abaixo e adicione o primeiro jogo informando o executável (.exe)." : "O administrador ainda não adicionou jogos."}</p>
         </div>
       )}
 
@@ -102,13 +105,13 @@ export default function MyGames() {
         </div>
       )}
 
-      <FolderSettings settings={settings} onSaved={setSettings} />
+      {isAdmin && <FolderSettings settings={settings} onSaved={setSettings} />}
 
       {open && (
-        <MyGameSheet game={open} settings={settings} hostOnline={host.online} onClose={() => setOpen(null)}
+        <MyGameSheet game={open} settings={settings} hostOnline={host.online} isAdmin={isAdmin} onClose={() => setOpen(null)}
           onEdit={() => { setEditing(open); setOpen(null); }} onDelete={() => remove(open)} />
       )}
-      {editing && (
+      {isAdmin && editing && (
         <MyGameForm initial={editing} settings={settings} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); }} />
       )}
     </div>

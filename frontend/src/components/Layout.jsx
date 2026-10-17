@@ -6,7 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 const NAV = [
   { to: "/app", label: "Início", end: true, id: "dashboard" },
   { to: "/app/mygames", label: "Meus Jogos", id: "mygames" },
-  { to: "/app/host", label: "Host do PC", id: "host" },
+  { to: "/app/host", label: "Host do PC", id: "host", admin: true },
   { to: "/app/catalog", label: "Catálogo", id: "catalog" },
   { to: "/app/library", label: "Biblioteca", id: "library" },
   { to: "/app/history", label: "Histórico", id: "history" },
@@ -26,6 +26,7 @@ function Logo() {
 export default function Layout({ children }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const items = NAV.filter((n) => !n.admin || user?.role === "admin");
 
   const doLogout = async () => {
     await logout();
@@ -41,7 +42,7 @@ export default function Layout({ children }) {
         <div className="mx-auto flex max-w-[1600px] items-center gap-6 px-4 py-3 sm:px-8">
           <Logo />
           <nav className="hidden flex-1 items-center gap-1 lg:flex">
-            {NAV.map((n) => (
+            {items.map((n) => (
               <NavLink key={n.id} to={n.to} end={n.end} data-testid={`nav-${n.id}-link`} className={link}>{n.label}</NavLink>
             ))}
           </nav>
@@ -57,7 +58,7 @@ export default function Layout({ children }) {
           </div>
         </div>
         <nav className="vx-row gap-0 border-t border-white/[0.04] px-2 lg:hidden" data-testid="mobile-nav">
-          {NAV.map((n) => (
+          {items.map((n) => (
             <NavLink key={n.id} to={n.to} end={n.end} data-testid={`mnav-${n.id}-link`} className={({ isActive }) => `whitespace-nowrap px-3 py-2.5 text-sm font-semibold ${isActive ? "text-white shadow-[inset_0_-3px_0_#107C10]" : "text-slate-400"}`}>{n.label}</NavLink>
           ))}
         </nav>

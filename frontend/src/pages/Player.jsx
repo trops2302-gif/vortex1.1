@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Maximize, Volume2, VolumeX, Settings2, Loader2, MonitorOff, Gamepad2, MousePointer2, Hand, Ban, Lock, X } from "lucide-react";
+import { ArrowLeft, Maximize, Volume2, VolumeX, Settings2, Loader2, MonitorOff, Gamepad2, MousePointer2, Hand, Ban, Lock, X, Keyboard } from "lucide-react";
 import { toast } from "sonner";
-import api from "@/lib/api";
+import api, { API } from "@/lib/api";
+import { createKeymapper, DEFAULT_KEYMAP } from "@/lib/keymap";
 import { QUALITY } from "@/lib/stream";
 import useViewerEngine from "@/hooks/useViewerEngine";
 import useRemoteInput from "@/hooks/useRemoteInput";
@@ -32,7 +33,7 @@ function Hud({ stats }) {
   );
 }
 
-function Menu({ mode, setMode, quality, setQuality, onLock, onClose }) {
+function Menu({ mode, setMode, quality, setQuality, onLock, onClose, keys, setKeys }) {
   return (
     <div className="absolute right-3 top-14 z-40 w-72 rounded-md border border-white/10 bg-[#16181B]/95 p-3 backdrop-blur-xl" data-testid="player-menu">
       <div className="mb-2 flex items-center justify-between"><p className="text-sm font-bold">Controles</p><button onClick={onClose} data-testid="player-menu-close"><X className="h-4 w-4 text-slate-400" /></button></div>
@@ -44,6 +45,10 @@ function Menu({ mode, setMode, quality, setQuality, onLock, onClose }) {
       {mode === "mouse" && (
         <button data-testid="player-lock-mouse" onClick={onLock} className="mt-1 flex w-full items-center gap-2 rounded px-3 py-2 text-sm text-slate-300 hover:bg-white/5"><Lock className="h-4 w-4" /> Capturar mouse (jogos FPS) · Esc solta</button>
       )}
+      <button data-testid="player-keymap-toggle" onClick={() => setKeys(!keys)} className="mt-1 flex w-full items-center justify-between rounded px-3 py-2 text-sm text-slate-300 hover:bg-white/5">
+        <span className="flex items-center gap-2"><Keyboard className="h-4 w-4" /> Controle vira teclado</span>
+        <span className={`font-mono-vx text-xs ${keys ? "text-cyan-400" : "text-slate-500"}`}>{keys ? "ON" : "OFF"}</span>
+      </button>
       <p className="mb-1 mt-3 text-sm font-bold">Qualidade</p>
       {Object.entries(QUALITY).map(([k, q]) => (
         <button key={k} data-testid={`player-quality-${k}`} onClick={() => setQuality(k)} className={`w-full rounded px-3 py-2 text-left text-sm ${quality === k ? "bg-white/15 font-semibold text-white" : "text-slate-400 hover:bg-white/5"}`}>{q.label}</button>
@@ -74,6 +79,31 @@ function Overlay({ phase, game, onBack }) {
   );
 }
 
+// Records the real session (duration + average quality) for the History page
+function useStreamRecord(live, gameId, stats) {
+  const sid = useRef(null);
+  const latest = useRef(stats);
+  latest.current = stats;
+  useEffect(() => {
+    if (!live || sid.current) return;
+    api.post("/streams/start", { game_id: gameId }).then(({ data }) => { sid.current = data.id; });
+  }, [live, gameId]);
+  useEffect(() => {
+    const push = () => {
+      const s = latest.current;
+      if (sid.current && s) api.post(`/streams/${sid.current}/stats`, { fps: s.fps, rtt: s.rtt, mbps: s.mbps, res: s.res }).catch(() => {});
+    };
+    const t = setInterval(push, 10000);
+    const end = () => {
+      if (!sid.current) return;
+      fetch(`${API}/streams/${sid.current}/end`, { method: "POST", keepalive: true, credentials: "include", headers: { Authorization: `Bearer ${localStorage.getItem("vx_token")}` } });
+      sid.current = null;
+    };
+    window.addEventListener("pagehide", end);
+    return () => { clearInterval(t); window.removeEventListener("pagehide", end); push(); end(); };
+  }, []);
+}
+
 export default function Player() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
@@ -87,9 +117,14 @@ export default function Player() {
   const surfaceRef = useRef(null);
   const containerRef = useRef(null);
   const launched = useRef(false);
+  const [keys, setKeys] = useState(false);
 
   useEffect(() => {
-    if (gameId) api.get("/mygames").then(({ data }) => setGame(data.find((g) => g.id === gameId) || null));
+    if (gameId) api.get("/mygames").then(({ data }) => {
+      const g = data.find((x) => x.id === gameId) || null;
+      setGame(g);
+      if (g?.key_map?.enabled) setKeys(true);
+    });
   }, [gameId]);
 
   const onHostMsg = useCallback((m) => {
@@ -105,7 +140,11 @@ export default function Player() {
   const dcSend = useRef(send);
   dcSend.current = send;
   const live = phase === "live";
-  const pads = usePhysicalGamepads(send, live);
+  const mapper = useMemo(() => (keys ? createKeymapper(game?.key_map?.enabled ? game.key_map : DEFAULT_KEYMAP, send) : null), [keys, game, send]);
+  useEffect(() => () => mapper?.dispose(), [mapper]);
+  const padSend = useCallback((m) => (mapper && m.t === "gp" ? mapper.handle(m) : send(m)), [mapper, send]);
+  const pads = usePhysicalGamepads(padSend, live);
+  useStreamRecord(live, gameId, stats);
   useRemoteInput({ send, enabled: live && mode !== "none", mode, surfaceRef, videoRef });
 
   useEffect(() => { if (live) send({ t: "quality", preset: quality }); }, [quality, live, send]);
@@ -136,7 +175,7 @@ export default function Player() {
       <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 h-full w-full object-contain" data-testid="player-video" />
       <div ref={surfaceRef} className="absolute inset-0 z-10" style={{ touchAction: "none", cursor: mode === "mouse" ? "crosshair" : "default" }} data-testid="player-surface" />
 
-      {showPad && <VirtualGamepad send={send} />}
+      {showPad && <VirtualGamepad send={padSend} />}
 
       <div className={`pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start justify-between gap-2 p-3 transition-opacity duration-300 ${chrome || !live ? "opacity-100" : "opacity-30 hover:opacity-100"}`}>
         <div className="pointer-events-auto flex items-start gap-2">
@@ -153,7 +192,7 @@ export default function Player() {
         </div>
       </div>
 
-      {menu && <Menu mode={mode} setMode={setMode} quality={quality} setQuality={setQuality} onClose={() => setMenu(false)} onLock={() => { surfaceRef.current.requestPointerLock?.(); setMenu(false); }} />}
+      {menu && <Menu keys={keys} setKeys={setKeys} mode={mode} setMode={setMode} quality={quality} setQuality={setQuality} onClose={() => setMenu(false)} onLock={() => { surfaceRef.current.requestPointerLock?.(); setMenu(false); }} />}
       {live && muted && (
         <button onClick={toggleSound} data-testid="player-unmute-hint" className="absolute bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-black/70 px-4 py-2 text-xs text-white backdrop-blur" style={{ display: showPad ? "none" : undefined }}>Toque para ativar o som</button>
       )}

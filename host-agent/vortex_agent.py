@@ -155,6 +155,67 @@ def gamepad(slot, b, axes, lt, rt):
     pad.update()
 
 
+# ---------------------------------------------------------------- Sunshine
+import base64
+import ssl
+import urllib.request
+from pathlib import Path
+
+COVERS = Path(__file__).with_name("covers")
+
+
+def _sunshine(cfg, method, path, body=None):
+    req = urllib.request.Request(cfg["url"].rstrip("/") + path, method=method,
+                                 data=json.dumps(body).encode() if body is not None else None)
+    tok = base64.b64encode(f"{cfg['user']}:{cfg['password']}".encode()).decode()
+    req.add_header("Authorization", f"Basic {tok}")
+    req.add_header("Content-Type", "application/json")
+    ctx = ssl.create_default_context()
+    ctx.check_hostname, ctx.verify_mode = False, ssl.CERT_NONE
+    with urllib.request.urlopen(req, context=ctx, timeout=10) as r:
+        raw = r.read()
+        return json.loads(raw) if raw else {}
+
+
+def _cover_png(name, url):
+    if not url:
+        return ""
+    try:
+        from PIL import Image
+        COVERS.mkdir(exist_ok=True)
+        jpg = COVERS / "tmp.img"
+        urllib.request.urlretrieve(url, jpg)
+        png = COVERS / ("".join(c for c in name if c.isalnum()) + ".png")
+        Image.open(jpg).convert("RGB").save(png)
+        return str(png)
+    except Exception as e:
+        print(f"[capa] {name}: {e}")
+        return ""
+
+
+def sunshine_sync(apps, cfg):
+    if not cfg.get("user"):
+        return {"t": "sunshine-result", "ok": False, "error": "Inicie o agente com --sunshine-user e --sunshine-pass"}
+    try:
+        current = _sunshine(cfg, "GET", "/api/apps").get("apps", [])
+        names = {a.get("name"): i for i, a in enumerate(current)}
+        added = updated = 0
+        for app in apps:
+            idx = names.get(app["name"], -1)
+            body = {"name": app["name"], "output": "", "cmd": app["cmd"], "working-dir": app.get("working-dir", ""),
+                    "index": idx, "exclude-global-prep-cmd": False, "elevated": False, "auto-detach": True,
+                    "wait-all": True, "exit-timeout": 5, "prep-cmd": [], "detached": [],
+                    "image-path": _cover_png(app["name"], app.get("cover"))}
+            _sunshine(cfg, "POST", "/api/apps", body)
+            if idx < 0:
+                added += 1
+            else:
+                updated += 1
+        return {"t": "sunshine-result", "ok": True, "added": added, "updated": updated}
+    except Exception as e:
+        return {"t": "sunshine-result", "ok": False, "error": f"Sunshine: {e}"}
+
+
 # ---------------------------------------------------------------- servidor local
 def allowed_path(path, folders):
     full = os.path.normcase(os.path.abspath(path))
@@ -170,7 +231,7 @@ def launch(path, args, folders):
     return {"t": "launch-result", "ok": True}
 
 
-def handle(msg, folders):
+def handle(msg, folders, sun=None):
     t = msg.get("t")
     if t == "k":
         key(msg["code"], msg["down"])
@@ -186,6 +247,8 @@ def handle(msg, folders):
         gamepad(msg.get("slot", 0), msg["b"], msg["axes"], msg.get("lt", 0), msg.get("rt", 0))
     elif t == "launch":
         return launch(msg["path"], msg.get("args", ""), folders)
+    elif t == "sunshine-sync":
+        return sunshine_sync(msg.get("apps", []), sun or {})
     elif t == "release":
         for p in pads.values():
             p.reset()
@@ -197,8 +260,12 @@ async def main():
     ap = argparse.ArgumentParser(description="Vortex Host Agent")
     ap.add_argument("--folders", nargs="*", default=[], help="Pastas de jogos permitidas")
     ap.add_argument("--port", type=int, default=8765)
+    ap.add_argument("--sunshine-url", default="https://localhost:47990")
+    ap.add_argument("--sunshine-user", default=os.environ.get("SUNSHINE_USER", ""))
+    ap.add_argument("--sunshine-pass", default=os.environ.get("SUNSHINE_PASS", ""))
     ap.add_argument("--pin", default=os.environ.get("VORTEX_PIN") or f"{secrets.randbelow(10**6):06d}")
     a = ap.parse_args()
+    sun = {"url": a.sunshine_url, "user": a.sunshine_user, "password": a.sunshine_pass}
 
     fails = {"n": 0, "until": 0.0}
 
@@ -214,10 +281,12 @@ async def main():
                 return
             fails["n"] = 0
             await ws.send(json.dumps({"t": "auth", "ok": True, "gamepad": vg is not None,
-                                      "platform": sys.platform, "folders": a.folders}))
+                                      "platform": sys.platform, "folders": a.folders,
+                                      "sunshine": bool(a.sunshine_user)}))
             print("[ok] navegador host conectado")
             async for raw in ws:
-                res = handle(json.loads(raw), a.folders)
+                msg = json.loads(raw)
+                res = await asyncio.to_thread(handle, msg, a.folders, sun) if msg.get("t") == "sunshine-sync" else handle(msg, a.folders)
                 if res:
                     await ws.send(json.dumps(res))
         except Exception as e:
@@ -229,6 +298,7 @@ async def main():
     print(f"  Vortex Host Agent  ·  ws://127.0.0.1:{a.port}")
     print(f"  PIN de pareamento: {a.pin}")
     print(f"  Pastas permitidas: {a.folders or '(nenhuma - lançamento desativado)'}")
+    print(f"  Sunshine: {'configurado' if a.sunshine_user else 'não configurado'} ({a.sunshine_url})")
     print(f"  Controle Xbox virtual: {'ATIVO' if vg else 'indisponível'}")
     print("=" * 52)
     async with websockets.serve(serve, "127.0.0.1", a.port, max_size=2**16):
