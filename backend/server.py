@@ -112,81 +112,6 @@ class CreateSaveInput(BaseModel):
 # ----------------------------------------------------------------------------
 # Seed data
 # ----------------------------------------------------------------------------
-GAMES_SEED = [
-    {"id": "elden-ring", "title": "Elden Ring", "genre": "RPG de Ação", "studio": "FromSoftware",
-     "rating": 96, "size_gb": 60, "year": 2022, "hdr": True, "featured": True,
-     "tags": ["Mundo Aberto", "Souls", "Fantasia Sombria"],
-     "description": "Erga-se, Maculado, e seja guiado pela graça para brandir o poder do Anel Prístino e tornar-se um Lorde Prístino nas Terras Intermédias.",
-     "cover": "https://images.unsplash.com/photo-1640903581708-8d491706515b?crop=entropy&cs=srgb&fm=jpg&q=85",
-     "hero": "https://images.unsplash.com/photo-1696027944149-c1c074b01b03?crop=entropy&cs=srgb&fm=jpg&q=85"},
-    {"id": "gow-ragnarok", "title": "God of War Ragnarök", "genre": "Ação / Aventura", "studio": "Santa Monica",
-     "rating": 94, "size_gb": 90, "year": 2022, "hdr": True, "featured": True,
-     "tags": ["Nórdico", "Narrativa", "Cinematográfico"],
-     "description": "Kratos e Atreus embarcam numa jornada mítica em busca de respostas enquanto o Ragnarök se aproxima dos Nove Reinos.",
-     "cover": "https://images.unsplash.com/photo-1675345842723-841fd8153628?crop=entropy&cs=srgb&fm=jpg&q=85",
-     "hero": "https://images.unsplash.com/photo-1629794332921-5c3648de80cc?crop=entropy&cs=srgb&fm=jpg&q=85"},
-    {"id": "cyberpunk-2077", "title": "Cyberpunk 2077", "genre": "RPG de Ação", "studio": "CD Projekt Red",
-     "rating": 86, "size_gb": 70, "year": 2020, "hdr": True, "featured": True,
-     "tags": ["Cyberpunk", "Mundo Aberto", "Sci-Fi"],
-     "description": "Torne-se um mercenário cibernético em Night City, uma megalópole obcecada por poder, glamour e modificações corporais.",
-     "cover": "https://images.unsplash.com/photo-1672872476232-da16b45c9001?crop=entropy&cs=srgb&fm=jpg&q=85",
-     "hero": "https://images.unsplash.com/photo-1600998837340-4887228e311f?crop=entropy&cs=srgb&fm=jpg&q=85"},
-    {"id": "black-myth-wukong", "title": "Black Myth: Wukong", "genre": "RPG de Ação", "studio": "Game Science",
-     "rating": 82, "size_gb": 130, "year": 2024, "hdr": True, "featured": False,
-     "tags": ["Mitologia", "Souls", "Chinês"],
-     "description": "Embarque numa épica jornada baseada em 'Jornada ao Oeste', encarnando o Destinado para desvendar a verdade por trás de um passado glorioso.",
-     "cover": "https://images.unsplash.com/photo-1692124483246-c7f2a8085034?crop=entropy&cs=srgb&fm=jpg&q=85",
-     "hero": "https://images.unsplash.com/photo-1686700529666-a5358f4a2c98?crop=entropy&cs=srgb&fm=jpg&q=85"},
-    {"id": "starfield", "title": "Starfield", "genre": "RPG Espacial", "studio": "Bethesda",
-     "rating": 83, "size_gb": 125, "year": 2023, "hdr": True, "featured": False,
-     "tags": ["Espaço", "Exploração", "Sci-Fi"],
-     "description": "Crie qualquer personagem e explore com liberdade sem precedentes num universo com mais de mil planetas.",
-     "cover": "https://images.unsplash.com/photo-1688407832489-cc9db90773f5?crop=entropy&cs=srgb&fm=jpg&q=85",
-     "hero": "https://images.unsplash.com/photo-1761212625300-e37d470be2ed?crop=entropy&cs=srgb&fm=jpg&q=85"},
-    {"id": "witcher-3", "title": "The Witcher 3: Wild Hunt", "genre": "RPG de Ação", "studio": "CD Projekt Red",
-     "rating": 93, "size_gb": 50, "year": 2015, "hdr": True, "featured": False,
-     "tags": ["Fantasia", "Mundo Aberto", "Narrativa"],
-     "description": "Geralt de Rívia, caçador de monstros, parte numa busca para encontrar a criança da profecia num vasto mundo aberto.",
-     "cover": "https://images.unsplash.com/photo-1460194436988-671f763436b7?crop=entropy&cs=srgb&fm=jpg&q=85",
-     "hero": "https://images.unsplash.com/photo-1599721765154-0f596e632cba?crop=entropy&cs=srgb&fm=jpg&q=85"},
-    {"id": "horizon-fw", "title": "Horizon Forbidden West", "genre": "Ação / Aventura", "studio": "Guerrilla Games",
-     "rating": 88, "size_gb": 100, "year": 2022, "hdr": True, "featured": False,
-     "tags": ["Pós-apocalíptico", "Mundo Aberto", "Robôs"],
-     "description": "Junte-se a Aloy enquanto ela desbrava fronteiras perigosas para desvendar os mistérios por trás de pragas que ameaçam a vida.",
-     "cover": "https://images.unsplash.com/photo-1711319551836-f7ca9764a898?crop=entropy&cs=srgb&fm=jpg&q=85",
-     "hero": "https://images.unsplash.com/photo-1599721765154-0f596e632cba?crop=entropy&cs=srgb&fm=jpg&q=85"},
-    {"id": "spiderman-2", "title": "Marvel's Spider-Man 2", "genre": "Ação / Aventura", "studio": "Insomniac",
-     "rating": 90, "size_gb": 98, "year": 2023, "hdr": True, "featured": False,
-     "tags": ["Super-herói", "Mundo Aberto", "Marvel"],
-     "description": "Peter Parker e Miles Morales enfrentam a ameaça definitiva de Venom numa Nova York maior e mais vibrante.",
-     "cover": "https://images.unsplash.com/photo-1586968272237-a3d597214887?crop=entropy&cs=srgb&fm=jpg&q=85",
-     "hero": "https://images.unsplash.com/photo-1624075250557-9e020cecaaf6?crop=entropy&cs=srgb&fm=jpg&q=85"},
-    {"id": "hogwarts-legacy", "title": "Hogwarts Legacy", "genre": "RPG de Ação", "studio": "Avalanche",
-     "rating": 84, "size_gb": 85, "year": 2023, "hdr": True, "featured": False,
-     "tags": ["Magia", "Mundo Aberto", "Fantasia"],
-     "description": "Viva uma aventura inédita no mundo mágico dos anos 1800, frequentando Hogwarts e dominando feitiços e poções.",
-     "cover": "https://images.unsplash.com/photo-1599937054672-14f207a40120?crop=entropy&cs=srgb&fm=jpg&q=85",
-     "hero": "https://images.unsplash.com/photo-1696027944149-c1c074b01b03?crop=entropy&cs=srgb&fm=jpg&q=85"},
-    {"id": "baldurs-gate-3", "title": "Baldur's Gate 3", "genre": "RPG", "studio": "Larian Studios",
-     "rating": 96, "size_gb": 122, "year": 2023, "hdr": True, "featured": True,
-     "tags": ["D&D", "Turnos", "Narrativa"],
-     "description": "Reúna seu grupo e retorne aos Reinos Esquecidos numa história de companheirismo, traição e sobrevivência.",
-     "cover": "https://images.unsplash.com/photo-1686700529666-a5358f4a2c98?crop=entropy&cs=srgb&fm=jpg&q=85",
-     "hero": "https://images.unsplash.com/photo-1692124483246-c7f2a8085034?crop=entropy&cs=srgb&fm=jpg&q=85"},
-    {"id": "alan-wake-2", "title": "Alan Wake 2", "genre": "Survival Horror", "studio": "Remedy",
-     "rating": 89, "size_gb": 90, "year": 2023, "hdr": True, "featured": False,
-     "tags": ["Terror", "Narrativa", "Suspense"],
-     "description": "Um escritor preso num pesadelo e uma agente do FBI investigam assassinatos rituais numa cidade assombrada.",
-     "cover": "https://images.unsplash.com/photo-1600998837340-4887228e311f?crop=entropy&cs=srgb&fm=jpg&q=85",
-     "hero": "https://images.unsplash.com/photo-1672872476232-da16b45c9001?crop=entropy&cs=srgb&fm=jpg&q=85"},
-    {"id": "red-dead-2", "title": "Red Dead Redemption 2", "genre": "Ação / Aventura", "studio": "Rockstar",
-     "rating": 97, "size_gb": 120, "year": 2018, "hdr": True, "featured": True,
-     "tags": ["Faroeste", "Mundo Aberto", "Narrativa"],
-     "description": "América, 1899. Arthur Morgan e a gangue Van der Linde fogem enquanto a era dos fora-da-lei chega ao fim.",
-     "cover": "https://images.unsplash.com/photo-1599721765154-0f596e632cba?crop=entropy&cs=srgb&fm=jpg&q=85",
-     "hero": "https://images.unsplash.com/photo-1711319551836-f7ca9764a898?crop=entropy&cs=srgb&fm=jpg&q=85"},
-]
-
 NODES_SEED = [
     {"id": "sao-paulo", "name": "São Paulo", "country": "Brasil", "flag": "🇧🇷", "gpu": "RTX 4090",
      "base_ping": 12, "region": "América do Sul"},
@@ -258,8 +183,7 @@ async def me(user: dict = Depends(get_current_user)):
 # ----------------------------------------------------------------------------
 @api_router.get("/games")
 async def list_games():
-    games = await db.games.find({}, {"_id": 0}).to_list(1000)
-    return games
+    return await db.mygames.find({"cover": {"$ne": ""}}, {"_id": 0, "id": 1, "title": 1, "cover": 1}).to_list(50)
 
 
 @api_router.get("/games/{game_id}")
@@ -484,9 +408,6 @@ async def stats(user: dict = Depends(get_current_user)):
 @app.on_event("startup")
 async def startup():
     await db.users.create_index("email", unique=True)
-    # seed games
-    for g in GAMES_SEED:
-        await db.games.update_one({"id": g["id"]}, {"$set": g}, upsert=True)
     for n in NODES_SEED:
         await db.nodes.update_one({"id": n["id"]}, {"$set": n}, upsert=True)
     # seed admin

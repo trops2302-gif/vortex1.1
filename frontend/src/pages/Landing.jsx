@@ -6,10 +6,10 @@ import api from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 
 const FEATURES = [
-  { icon: Wifi, title: "Latência < 15ms", desc: "Servidores próximos a você, resposta instantânea." },
-  { icon: Gamepad2, title: "4K · 120 FPS", desc: "Gráficos ultra sem precisar de PC gamer." },
-  { icon: Smartphone, title: "Jogue no Celular", desc: "Só precisa de internet. O jogo roda no servidor." },
-  { icon: Cloud, title: "Saves na Nuvem", desc: "Continue de onde parou, em qualquer dispositivo." },
+  { icon: Wifi, title: "Stream direto", desc: "Vídeo WebRTC do PC para o seu aparelho, sem intermediários." },
+  { icon: Gamepad2, title: "Controle Xbox", desc: "Controle na tela, Bluetooth ou teclado e mouse." },
+  { icon: Smartphone, title: "Jogue no Celular", desc: "Só precisa de internet. O jogo roda no PC." },
+  { icon: Cloud, title: "Moonlight também", desc: "Jogos sincronizados com o Sunshine para menor latência." },
 ];
 
 export default function Landing() {
@@ -58,14 +58,14 @@ export default function Landing() {
           <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-950/40 px-3 py-1.5">
               <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
-              <span className="font-mono-vx text-xs tracking-widest text-cyan-300">Servidores RTX 4090 online</span>
+              <span className="font-mono-vx text-xs tracking-widest text-cyan-300">Seu PC · seus jogos</span>
             </div>
             <h1 className="font-display text-5xl font-black leading-[0.95] tracking-tight sm:text-6xl lg:text-7xl">
               Jogos de <span className="text-cyan-400">PC</span> no seu <span className=" text-cyan-400">celular</span>
             </h1>
             <p className="mt-5 max-w-lg text-lg text-slate-300">
-              Elden Ring, God of War Ragnarök e muito mais rodando em máquinas potentes na nuvem.
-              Você só precisa de internet — o jogo roda no servidor e fica salvo.
+              Os jogos instalados no PC rodam lá e chegam ao seu celular ou navegador em vídeo ao vivo.
+              Você só precisa de internet.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <button
@@ -129,9 +129,8 @@ export default function Landing() {
       <section className="relative z-10 mx-auto max-w-5xl px-5 pb-20 sm:px-8">
         <div className="rounded-md border border-amber-500/20 bg-amber-950/10 p-6 text-sm text-amber-200/80">
           <Server className="mb-2 inline h-5 w-5 text-amber-400" />{" "}
-          <strong className="text-amber-300">Como funciona:</strong> o jogo é executado numa máquina
-          potente no datacenter e transmitido em vídeo para o seu aparelho. Os títulos exibidos (Elden Ring,
-          God of War etc.) são demonstrativos do catálogo. O vídeo de stream nesta demo é simulado.
+          <strong className="text-amber-300">Como funciona:</strong> o jogo é executado no PC servidor e
+          transmitido em vídeo para o seu aparelho. Os controles voltam para o PC em tempo real.
         </div>
       </section>
 

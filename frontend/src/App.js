@@ -9,12 +9,8 @@ import Landing from "@/pages/Landing";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import Dashboard from "@/pages/Dashboard";
-import Catalog from "@/pages/Catalog";
-import Library from "@/pages/Library";
 import ServerStatus from "@/pages/ServerStatus";
-import CloudSaves from "@/pages/CloudSaves";
 import Profile from "@/pages/Profile";
-import StreamSession from "@/pages/StreamSession";
 import History from "@/pages/History";
 import Host from "@/pages/Host";
 import MyGames from "@/pages/MyGames";
@@ -71,27 +67,18 @@ function App() {
             <Route path="/register" element={<PublicOnly><Register /></PublicOnly>} />
 
             <Route path="/app" element={<AppShell><Dashboard /></AppShell>} />
-            <Route path="/app/catalog" element={<AppShell><Catalog /></AppShell>} />
-            <Route path="/app/library" element={<AppShell><Library /></AppShell>} />
+            <Route path="/app/catalog" element={<Navigate to="/app/mygames" replace />} />
+            <Route path="/app/library" element={<Navigate to="/app/mygames" replace />} />
             <Route path="/app/history" element={<AppShell><History /></AppShell>} />
             <Route path="/app/servers" element={<AppShell><ServerStatus /></AppShell>} />
-            <Route path="/app/saves" element={<AppShell><CloudSaves /></AppShell>} />
+            <Route path="/app/saves" element={<Navigate to="/app/mygames" replace />} />
             <Route path="/app/webrtc" element={<Navigate to="/app/host" replace />} />
             <Route path="/app/host" element={<AppShell><AdminOnly><Host /></AdminOnly></AppShell>} />
             <Route path="/app/mygames" element={<AppShell><MyGames /></AppShell>} />
             <Route path="/stream" element={<Protected><Player /></Protected>} />
             <Route path="/app/profile" element={<AppShell><Profile /></AppShell>} />
 
-            <Route
-              path="/play"
-              element={
-                <Protected>
-                  <LaunchProvider>
-                    <StreamSession />
-                  </LaunchProvider>
-                </Protected>
-              }
-            />
+            <Route path="/play" element={<Navigate to="/app/mygames" replace />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </AuthProvider>

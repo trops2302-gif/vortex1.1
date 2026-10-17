@@ -54,3 +54,8 @@ Usuário (PT-BR) quer um "cloud gaming" com servidor próprio para jogar jogos d
 - Capas automáticas: GET /api/covers/search?q= (Steam storesearch, sem chave) → capa 600x900 + hero.
 - Controle → teclado: key_map por jogo (KeyMapEditor), toggle no player; lib/keymap.js converte gamepad virtual/Bluetooth em teclas/mouse.
 - Sessões reais: /api/streams/start|stats|end|history; Histórico mostra duração, FPS/ping/Mbps médios, resolução (admin vê todos).
+
+## Sessão 2026-06 (parte 4)
+- Removidos catálogo falso (GAMES_SEED), Biblioteca, Saves, sessão simulada /play e jogos de teste. Banco limpo (games, library, sessions, saves, mygames, streams).
+- /api/games agora retorna capas dos jogos adicionados (usado na landing). Rotas antigas redirecionam para /app/mygames.
+- Landing reescrita sem jogos/servidores falsos. Página Servidores (nós simulados) ainda existe.

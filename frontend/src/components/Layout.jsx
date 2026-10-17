@@ -7,10 +7,7 @@ const NAV = [
   { to: "/app", label: "Início", end: true, id: "dashboard" },
   { to: "/app/mygames", label: "Meus Jogos", id: "mygames" },
   { to: "/app/host", label: "Host do PC", id: "host", admin: true },
-  { to: "/app/catalog", label: "Catálogo", id: "catalog" },
-  { to: "/app/library", label: "Biblioteca", id: "library" },
   { to: "/app/history", label: "Histórico", id: "history" },
-  { to: "/app/saves", label: "Saves", id: "saves" },
   { to: "/app/servers", label: "Servidores", id: "servers" },
 ];
 

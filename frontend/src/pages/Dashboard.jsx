@@ -4,8 +4,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Play, Plus, MonitorUp, ChevronRight } from "lucide-react";
 import api from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
-import { useLaunch } from "@/context/LaunchContext";
-import GameCard from "@/components/GameCard";
 import { GameArt } from "@/components/MyGameSheet";
 
 function Row({ title, action, onAction, children, testid }) {
@@ -51,25 +49,19 @@ function Hero({ slides, index, setIndex }) {
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { openLaunch } = useLaunch();
   const navigate = useNavigate();
-  const [games, setGames] = useState([]);
-  const [library, setLibrary] = useState([]);
   const [mine, setMine] = useState([]);
   const [host, setHost] = useState({ online: false });
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
-    api.get("/games").then(({ data }) => setGames(data));
-    api.get("/library").then(({ data }) => setLibrary(data));
     api.get("/mygames").then(({ data }) => setMine(data));
     api.get("/host/status").then(({ data }) => setHost(data)).catch(() => {});
   }, []);
 
   const playMine = (g) => navigate(`/stream?game=${g.id}`);
   const slides = [
-    ...mine.slice(0, 3).map((g) => ({ key: `m-${g.id}`, game: g, image: g.hero || g.cover, eyebrow: "Do seu PC", title: g.title, text: g.genre || "Instalado no seu computador · jogue pelo navegador ou Moonlight", primary: "Jogar", onPrimary: () => playMine(g), secondary: "Meus Jogos", onSecondary: () => navigate("/app/mygames") })),
-    ...games.filter((g) => g.featured).slice(0, mine.length ? 2 : 4).map((g) => ({ key: g.id, image: g.hero, eyebrow: "Destaque do catálogo", title: g.title, text: g.description, primary: "Jogar", onPrimary: () => openLaunch(g), secondary: "Catálogo", onSecondary: () => navigate("/app/catalog") })),
+    ...mine.slice(0, 5).map((g) => ({ key: `m-${g.id}`, game: g, image: g.hero || g.cover, eyebrow: "Do seu PC", title: g.title, text: g.genre || "Instalado no seu computador · jogue pelo navegador ou Moonlight", primary: "Jogar", onPrimary: () => playMine(g), secondary: "Meus Jogos", onSecondary: () => navigate("/app/mygames") })),
   ];
 
   useEffect(() => {
@@ -78,7 +70,6 @@ export default function Dashboard() {
     return () => clearTimeout(t);
   }, [index, slides.length]);
 
-  const recent = library.filter((g) => g.last_played).sort((a, b) => (a.last_played < b.last_played ? 1 : -1));
   const tileW = "w-[38vw] flex-shrink-0 sm:w-44 lg:w-48";
 
   return (
@@ -105,15 +96,6 @@ export default function Dashboard() {
         </button>}
       </Row>
 
-      {recent.length > 0 && (
-        <Row title="Continuar jogando" testid="row-recent">
-          {recent.map((g) => <div key={g.id} className={tileW}><GameCard game={g} /></div>)}
-        </Row>
-      )}
-
-      <Row title="Catálogo de demonstração" action="Catálogo" onAction={() => navigate("/app/catalog")} testid="row-catalog">
-        {games.map((g) => <div key={g.id} className={tileW}><GameCard game={g} /></div>)}
-      </Row>
     </div>
   );
 }
