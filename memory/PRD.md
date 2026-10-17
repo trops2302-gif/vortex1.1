@@ -36,3 +36,14 @@ Usuário (PT-BR) quer um "cloud gaming" com servidor próprio para jogar jogos d
 - P1: Teste real de ping do navegador até os nós.
 - P2: CORS explícito por origem + brute-force lockout no login para produção.
 - P2: Adicionar servidor TURN (coturn) ao demo WebRTC; integrar Moonlight/Sunshine ou GPU cloud (AWS g4/g5, Paperspace) para rodar jogos reais.
+
+## Sessão 2026-06 (continuação)
+- Projeto clonado de github t2536985-glitch/vortex1 e rodando (JWT_SECRET/ADMIN no backend/.env).
+- Player WebRTC real: /app/host (PC captura tela + sinalização autenticada /api/ws/stream) e /stream?game=ID (celular). STUN + TURN gratuito de teste (turn.elixir-webrtc.org via /api/webrtc/ice; TURN_URLS/USERNAME/CREDENTIAL no .env substituem).
+- Controle remoto: teclado, mouse (pointer lock), touchpad, gamepad virtual Xbox, controle Bluetooth (Gamepad API) → DataChannel → host → agente local ws://127.0.0.1:8765.
+- Agente do PC: /app/host-agent (vortex_agent.py, SendInput scancodes, vgamepad/ViGEmBus, launch restrito às pastas, PIN com lockout). Download via /api/host/agent/{arquivo}.
+- Meus Jogos (/app/mygames): cadastro manual, 2 pastas configuráveis, exportar apps para Sunshine, opção Moonlight.
+- Visual estilo Game Pass (verde #107C10, Archivo/Figtree, top nav, hero carrossel, tiles retrato).
+- Usuário pediu: NÃO chamar testing agent nem outros agentes; ele testa.
+## Backlog
+- Sync automático com API do Sunshine; capas automáticas; histórico das sessões reais; mapeamento de teclas → controle.
