@@ -696,7 +696,7 @@ class StreamRooms:
         self.rooms: dict = {}
 
     def room(self, uid: str) -> dict:
-        return self.rooms.setdefault(uid, {"host": None, "viewers": {}})
+        return self.rooms.setdefault(uid, {"host": None, "agent": None, "viewers": {}})
 
 
 stream_rooms = StreamRooms()
@@ -721,53 +721,84 @@ async def _send(ws: Optional[WebSocket], obj: dict):
             pass
 
 
+async def _broadcast(room: dict, obj: dict):
+    for vws in list(room["viewers"].values()):
+        await _send(vws, obj)
+
+
 @api_router.get("/host/status")
 async def host_status(user: dict = Depends(get_current_user)):
-    r = stream_rooms.rooms.get(HOST_ROOM) or {"host": None, "viewers": {}}
-    return {"online": r["host"] is not None, "viewers": len(r["viewers"])}
+    r = stream_rooms.room(HOST_ROOM)
+    return {"online": r["host"] is not None or r["agent"] is not None, "streaming": r["host"] is not None,
+            "agent": r["agent"] is not None, "viewers": len(r["viewers"])}
+
+
+async def _viewer_launch(room: dict, peer_id: str, game_id: str):
+    viewer = room["viewers"].get(peer_id)
+    if room["host"]:
+        await _send(room["host"], {"type": "launch", "game_id": game_id, "from": peer_id})
+        return
+    if not room["agent"]:
+        await _send(viewer, {"type": "status", "state": "offline", "text": "O PC está desligado ou o agente não está rodando."})
+        return
+    game = await db.mygames.find_one({"id": game_id}, {"_id": 0})
+    if not game:
+        await _send(viewer, {"type": "status", "state": "error", "text": "Jogo não encontrado."})
+        return
+    folders = (await _settings_doc())["game_folders"]
+    idx = game.get("folder_index", 0)
+    path = _join_path(folders[idx] if idx < 2 else "", game["exe"])
+    await _send(room["agent"], {"type": "launch", "game_id": game_id, "title": game["title"],
+                                "path": path, "args": game.get("args", "")})
 
 
 @api_router.websocket("/ws/stream")
 async def stream_ws(websocket: WebSocket, token: str = "", role: str = "viewer"):
     user = await _ws_user(token)
     await websocket.accept()
-    if not user or role not in ("host", "viewer") or (role == "host" and user.get("role") != "admin"):
+    if not user or role not in ("host", "viewer", "agent") or (role != "viewer" and user.get("role") != "admin"):
         await websocket.close(code=4401)
         return
     room = stream_rooms.room(HOST_ROOM)
     peer_id = secrets.token_hex(4)
-    if role == "host":
-        if room["host"]:
-            await _send(room["host"], {"type": "replaced"})
+    if role in ("host", "agent"):
+        if room[role]:
+            await _send(room[role], {"type": "replaced"})
             try:
-                await room["host"].close()
+                await room[role].close()
             except Exception:
                 pass
-        room["host"] = websocket
+        room[role] = websocket
         await _send(websocket, {"type": "welcome", "id": peer_id, "viewers": list(room["viewers"].keys())})
-        for vid, vws in room["viewers"].items():
-            await _send(vws, {"type": "host-online"})
+        await _broadcast(room, {"type": f"{role}-online"})
     else:
         room["viewers"][peer_id] = websocket
-        await _send(websocket, {"type": "welcome", "id": peer_id, "host": room["host"] is not None})
+        await _send(websocket, {"type": "welcome", "id": peer_id, "host": room["host"] is not None,
+                                "agent": room["agent"] is not None})
         await _send(room["host"], {"type": "viewer-joined", "id": peer_id})
     try:
         while True:
             msg = json.loads(await websocket.receive_text())
             if role == "host":
                 await _send(room["viewers"].get(msg.get("to")), {**msg, "from": "host"})
+            elif role == "agent":
+                if msg.get("type") == "status":
+                    await _broadcast(room, msg)
+            elif msg.get("type") == "launch":
+                await _viewer_launch(room, peer_id, msg.get("game_id"))
             else:
                 await _send(room["host"], {**msg, "from": peer_id})
     except (WebSocketDisconnect, json.JSONDecodeError, RuntimeError):
         pass
     finally:
-        if role == "host" and room["host"] is websocket:
-            room["host"] = None
-            for vws in room["viewers"].values():
-                await _send(vws, {"type": "host-offline"})
+        if role in ("host", "agent") and room[role] is websocket:
+            room[role] = None
+            await _broadcast(room, {"type": f"{role}-offline"})
         elif role == "viewer":
             room["viewers"].pop(peer_id, None)
             await _send(room["host"], {"type": "viewer-left", "id": peer_id})
+            if not room["viewers"]:
+                await _send(room["agent"], {"type": "viewers-empty"})
 
 
 app.include_router(api_router)
